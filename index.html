@@ -3,20 +3,80 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="0;url=https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">
-  <link rel="canonical" href="https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">
-  <title>真实资产配置回测 · 新地址</title>
-  <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f7f4;color:#17211b;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
-    main{width:min(560px,calc(100% - 40px));padding:34px;border:1px solid #dbe4dc;border-radius:20px;background:#fff;box-shadow:0 18px 50px rgba(28,55,36,.08)}
-    h1{margin:0 0 10px;font-size:28px}p{color:#5f6e63}a{display:inline-block;margin-top:8px;padding:11px 18px;border-radius:10px;background:#166534;color:#fff;text-decoration:none;font-weight:700}
-  </style>
+  <meta name="description" content="使用真实基金净值、复权行情和汇率的多资产配置回测工具">
+  <meta name="theme-color" content="#123b2a">
+  <title>真实资产配置回测</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">REAL MARKET DATA · RMB BASE</div>
+      <h1>多资产配置与真实历史回测</h1>
+      <p>输入基金、ETF、股票或美股代码，自动识别名称；使用真实净值、复权行情和汇率计算 1 / 3 / 5 / 10 年表现。</p>
+      <div class="hero-tags">
+        <span>✓ 取数失败即停止</span><span>¥ 统一人民币口径</span><span>↻ 年度再平衡</span>
+      </div>
+    </div>
+  </header>
+
   <main>
-    <h1>已切换到真实行情版</h1>
-    <p>旧版合成数据演示已经停用。新版本会显示行情来源和数据截止日；真实行情获取失败时会明确报错，不会补造走势或收益。</p>
-    <a href="https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">进入真实资产配置回测</a>
+    <section class="integrity-banner" aria-label="数据完整性规则">
+      <strong>真实数据规则</strong>
+      <span>市场资产不使用演示走势；每次结果展示数据源、共同区间和截止日期。现金收益率是显式假设。</span>
+    </section>
+
+    <section class="section-head">
+      <div><span class="step">01 / 配置资产</span><h2>你的 200 万元组合</h2></div>
+      <div class="target">历史目标：年化 7%–10% · 最大回撤 ≤15%</div>
+    </section>
+
+    <section class="summary-grid" id="summaryGrid" aria-live="polite"></section>
+
+    <section class="settings-card">
+      <label>再平衡
+        <select id="rebalance"><option value="每年">每年</option><option value="每季度">每季度</option><option value="每月">每月</option><option value="不再平衡">不再平衡</option></select>
+      </label>
+      <label>单边成本（基点）<input id="costBps" type="number" min="0" max="100" value="5"></label>
+      <div class="setting-note">在线稳定版的美股日更库当前收录 SPY；其他美股代码可在本地完整版使用。</div>
+    </section>
+
+    <section id="assetList" class="asset-list" aria-label="资产卡片"></section>
+
+    <section class="action-row">
+      <div class="add-actions">
+        <button class="button ghost" data-add="债券基金">＋ 添加基金</button>
+        <button class="button ghost" data-add="ETF">＋ 添加 ETF</button>
+        <button class="button ghost" data-add="股票">＋ 添加股票</button>
+      </div>
+      <button class="button primary" id="runButton">运行真实行情回测</button>
+    </section>
+
+    <section id="runStatus" class="run-status idle" aria-live="polite">
+      <span class="status-dot"></span><div><strong>等待运行</strong><p>最长约需 10–30 秒；任一资产取数失败时会明确报错。</p></div>
+    </section>
+
+    <section id="results" class="results" hidden>
+      <div class="section-head result-heading">
+        <div><span class="step">02 / 回测结果</span><h2>同口径多期限比较</h2></div>
+        <div id="dataWindow" class="target"></div>
+      </div>
+      <section id="headlineMetrics" class="summary-grid"></section>
+      <section class="panel chart-panel">
+        <div class="panel-title"><h3>组合净值</h3><span>当前配置与历史约束候选</span></div>
+        <svg id="navChart" viewBox="0 0 900 280" role="img" aria-label="组合净值走势图"></svg>
+        <div class="legend"><span><i class="current"></i>当前配置</span><span><i class="optimized"></i>历史约束候选</span></div>
+      </section>
+      <section class="panel table-panel"><div class="panel-title"><h3>1 / 3 / 5 / 10 年收益与风险</h3><span>年化收益 · 累计收益 · 最大回撤</span></div><div class="table-wrap"><table id="windowTable"></table></div></section>
+      <section class="two-column">
+        <section class="panel table-panel"><div class="panel-title"><h3>配置优化候选</h3><span id="optimizerStatus">固定现金 5%、美股 10%</span></div><div class="table-wrap"><table id="allocationTable"></table></div></section>
+        <section class="panel"><div class="panel-title"><h3>数据质量</h3><span>可追溯到每个代码</span></div><div id="qualityList" class="quality-list"></div></section>
+      </section>
+      <section id="warnings" class="warnings"></section>
+    </section>
   </main>
+
+  <footer>历史结果不代表未来收益，不构成投资建议。代码与数据更新流程公开保存在本仓库。</footer>
+  <script type="module" src="./app.mjs"></script>
 </body>
 </html>
