@@ -12,6 +12,15 @@ test("normalizeAssets enforces real codes, unique assets, and positive amounts",
   assert.throws(() => normalizeAssets([{ type: "现金", category: "现金", code: "CASH", amount: 0 }]), /大于 0/);
 });
 
+test("normalizeAssets preserves the role of each fixed-income sleeve", () => {
+  const [asset] = normalizeAssets([{
+    type: "债券基金", category: "固收", code: "000032", name: "易方达信用债债券A",
+    amount: 250_000, sleeve: "高等级信用", manager: "易方达基金",
+  }]);
+  assert.equal(asset.sleeve, "高等级信用");
+  assert.equal(asset.manager, "易方达基金");
+});
+
 test("analyzePortfolioData reports only fully covered windows and exact 2m constraints", () => {
   const assets = normalizeAssets([
     { type: "现金", category: "现金", code: "CASH", name: "现金", amount: 100_000, cashRate: 0.015 },
@@ -55,5 +64,7 @@ test("analyzePortfolioData reports only fully covered windows and exact 2m const
   assert.ok(result.windows[3]);
   assert.equal(result.windows[5], null);
   assert.equal(result.windows[10], null);
+  assert.ok(Math.abs(result.optimized.metrics.annualReturn - result.optimizedWindows[result.selectedYears].metrics.annualReturn) < 1e-12);
+  assert.ok(Math.abs(result.optimized.metrics.maxDrawdown - result.optimizedWindows[result.selectedYears].metrics.maxDrawdown) < 1e-12);
+  assert.ok(result.warnings.some((warning) => /样本内优化/.test(warning)));
 });
-

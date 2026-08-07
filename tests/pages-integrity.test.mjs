@@ -11,6 +11,8 @@ test("GitHub Pages entrypoint is the real-data app and no longer redirects", asy
   assert.doesNotMatch(html, /http-equiv="refresh"/i);
   assert.doesNotMatch(html, /real-portfolio-lab-cn\.fhvwtbfbvg\.chatgpt\.site/);
   assert.match(html, /id="assetList"/);
+  assert.match(html, /固收先分散/);
+  assert.match(html, /id="strategyGrid"/);
 });
 
 test("client loader fails closed instead of manufacturing market history", async () => {
@@ -19,6 +21,17 @@ test("client loader fails closed instead of manufacturing market history", async
   assert.match(source, /东方财富基金完整累计净值/);
   assert.match(source, /腾讯证券前复权日线/);
   assert.doesNotMatch(source, /Math\.sin|Math\.cos|randomWalk/);
+});
+
+test("responsive result panels contain wide tables instead of widening the page", async () => {
+  const css = await readFile(new URL("styles.css", root), "utf8");
+  assert.match(css, /\.panel[^{}]*\{[^{}]*min-width:0/);
+  assert.match(css, /\.table-wrap[^{}]*\{[^{}]*overflow:auto[^{}]*max-width:100%/);
+});
+
+test("resolved fund names refresh the visible strategy-role label", async () => {
+  const source = await readFile(new URL("app.mjs", root), "utf8");
+  assert.match(source, /querySelector\("\.asset-meta"\)/);
 });
 
 test("bundled SPY RMB snapshot contains a long, traceable real history", async () => {

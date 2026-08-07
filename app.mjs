@@ -1,19 +1,12 @@
 import { analyzePortfolioData, normalizeAssets } from "./lib/analysis.mjs";
 import { loadPortfolioPrices, resolveAssetName } from "./lib/market-data-browser.mjs";
+import { createDefaultAssets, inferSleeve, STRATEGY_POLICY } from "./lib/strategy.mjs";
 
 const ASSET_TYPES = ["现金", "债券基金", "宽基基金", "其他场外基金", "ETF", "股票", "美股/美股ETF"];
 const CATEGORIES = ["现金", "固收", "A股宽基", "黄金", "美股", "其他"];
 const lookupTimers = new Map();
 
-let assets = [
-  { id: "cash", type: "现金", category: "现金", code: "CASH", name: "现金备用金", amount: 100000, cashRate: 0.015, source: "用户设定现金年化代理（非行情）" },
-  { id: "bond1", type: "ETF", category: "固收", code: "511010", name: "国债ETF国泰", amount: 500000, source: "" },
-  { id: "bond2", type: "ETF", category: "固收", code: "511220", name: "城投债ETF海富通", amount: 300000, source: "" },
-  { id: "cn300", type: "ETF", category: "A股宽基", code: "510300", name: "沪深300ETF华泰柏瑞", amount: 300000, source: "" },
-  { id: "dividend", type: "ETF", category: "A股宽基", code: "510880", name: "红利ETF华泰柏瑞", amount: 300000, source: "" },
-  { id: "gold", type: "ETF", category: "黄金", code: "518880", name: "黄金ETF华安", amount: 300000, source: "" },
-  { id: "us", type: "美股/美股ETF", category: "美股", code: "SPY", name: "SPDR S&P 500 ETF Trust", amount: 200000, source: "GitHub Actions日更真实行情快照" },
-];
+let assets = createDefaultAssets();
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -43,6 +36,8 @@ function newAsset(type) {
     name: type === "现金" ? "现金备用金" : "等待输入代码",
     amount: 0,
     cashRate: 0.015,
+    sleeve: type === "现金" ? "应急备用" : (type === "债券基金" ? "自定义固收" : "自定义资产"),
+    manager: "",
     source: type === "现金" ? "用户设定现金年化代理（非行情）" : "",
   };
 }
@@ -68,6 +63,12 @@ function renderSummary() {
   ].join("");
 }
 
+function renderStrategy() {
+  $("#strategyGrid").innerHTML = STRATEGY_POLICY.buckets.map((bucket) => `<article class="strategy-card">
+    <span>${esc(bucket.label)}</span><strong>${pct(bucket.weight)}</strong><b>${money(bucket.amount)}</b><p>${esc(bucket.note)}</p>
+  </article>`).join("");
+}
+
 function resolvedText(asset) {
   if (asset.type === "现金") return { cls: "ok", text: `✓ ${asset.source}` };
   if (!codeIsValid(asset)) return { cls: "", text: asset.type === "美股/美股ETF" ? "请输入美股代码" : "请输入完整 6 位代码" };
@@ -90,7 +91,7 @@ function assetCard(asset, index) {
   const cash = asset.type === "现金";
   return `<article class="asset-card" data-id="${esc(asset.id)}">
     <div class="asset-top">
-      <div class="asset-title"><span class="asset-index">${String(index + 1).padStart(2, "0")}</span><div><strong class="asset-name">${esc(asset.name || asset.code || "未识别资产")}</strong><div class="resolved ${status.cls}">${esc(status.text)}</div></div></div>
+      <div class="asset-title"><span class="asset-index">${String(index + 1).padStart(2, "0")}</span><div><strong class="asset-name">${esc(asset.name || asset.code || "未识别资产")}</strong><div class="asset-meta">${esc(asset.sleeve || "未设置策略角色")}${asset.manager ? ` · ${esc(asset.manager)}` : ""}</div><div class="resolved ${status.cls}">${esc(status.text)}</div></div></div>
       <button class="remove" data-action="remove" aria-label="移除资产">移除</button>
     </div>
     <div class="asset-fields ${cash ? "cash" : ""}">
@@ -121,13 +122,18 @@ function renderAssets() {
       asset.code = asset.type === "现金" ? "CASH" : "";
       asset.name = asset.type === "现金" ? "现金备用金" : "等待输入代码";
       asset.source = asset.type === "现金" ? "用户设定现金年化代理（非行情）" : "";
+      asset.sleeve = asset.type === "现金" ? "应急备用" : (asset.type === "债券基金" ? "自定义固收" : "自定义资产");
+      asset.manager = "";
       asset.lookup = "idle";
       renderAssets();
       renderSummary();
     });
     const category = card.querySelector('[data-field="category"]');
     if (category) category.addEventListener("change", (event) => {
-      assets.find((item) => item.id === id).category = event.target.value;
+      const asset = assets.find((item) => item.id === id);
+      asset.category = event.target.value;
+      asset.sleeve = inferSleeve(asset.category, asset.name);
+      renderAssets();
       renderSummary();
     });
     const code = card.querySelector('[data-field="code"]');
@@ -140,6 +146,8 @@ function renderAssets() {
       asset.code = next;
       asset.name = next || "等待输入代码";
       asset.source = "";
+      asset.sleeve = inferSleeve(asset.category);
+      asset.manager = "";
       asset.lookup = "idle";
       updateResolved(card, asset);
       clearTimeout(lookupTimers.get(id));
@@ -163,6 +171,7 @@ function updateResolved(card, asset) {
   element.className = `resolved ${status.cls}`;
   element.textContent = status.text;
   card.querySelector(".asset-name").textContent = asset.name || asset.code || "未识别资产";
+  card.querySelector(".asset-meta").textContent = `${asset.sleeve || "未设置策略角色"}${asset.manager ? ` · ${asset.manager}` : ""}`;
 }
 
 async function lookupAsset(id) {
@@ -178,6 +187,7 @@ async function lookupAsset(id) {
     if (!current || `${current.type}:${current.code}` !== signature) return;
     current.name = result.name;
     current.source = result.source;
+    current.sleeve = inferSleeve(current.category, result.name);
     current.lookup = "ok";
   } catch (error) {
     const current = assets.find((item) => item.id === id);
@@ -240,10 +250,10 @@ function renderResults(analysis) {
     resultSummaryCard("候选最大回撤", pct(optimized.metrics.maxDrawdown), `夏普 ${number(optimized.metrics.sharpe)}`),
   ].join("");
   $("#optimizerStatus").textContent = analysis.optimized.feasible
-    ? `已找到满足 7%–10% / 回撤≤15% 的候选 · ${analysis.optimized.sampleCount} 个有效样本`
+    ? `已找到满足 7%–10% / 回撤≤15% 且固收分散的候选 · ${analysis.optimized.sampleCount} 个有效样本`
     : `未找到同时满足全部目标的候选 · 展示最佳风险调整样本`;
   $("#windowTable").innerHTML = `<thead><tr><th>期限</th><th>当前：年化 / 累计 / 回撤</th><th>候选：年化 / 累计 / 回撤</th><th>数据点</th></tr></thead><tbody>${[1,3,5,10].map((years) => `<tr><td>${years} 年</td><td>${compactWindow(analysis.windows[years])}</td><td>${compactWindow(analysis.optimizedWindows[years])}</td><td class="num">${analysis.windows[years]?.points?.toLocaleString("zh-CN") ?? "—"}</td></tr>`).join("")}</tbody>`;
-  $("#allocationTable").innerHTML = `<thead><tr><th>代码 / 名称</th><th>当前</th><th>候选</th><th>候选金额</th></tr></thead><tbody>${analysis.allocation.map((row) => `<tr><td><strong>${esc(row.code)}</strong><br><small>${esc(row.name)}</small></td><td class="num">${pct(row.weight)}</td><td class="num">${pct(row.optimizedWeight)}</td><td class="num">${money(row.optimizedAmount)}</td></tr>`).join("")}</tbody>`;
+  $("#allocationTable").innerHTML = `<thead><tr><th>代码 / 名称</th><th>当前</th><th>候选</th><th>候选金额</th></tr></thead><tbody>${analysis.allocation.map((row) => `<tr><td><strong>${esc(row.code)}</strong><br><small>${esc(row.name)} · ${esc(row.sleeve || row.category)}</small></td><td class="num">${pct(row.weight)}</td><td class="num">${pct(row.optimizedWeight)}</td><td class="num">${money(row.optimizedAmount)}</td></tr>`).join("")}</tbody>`;
   $("#qualityList").innerHTML = analysis.quality.map((row) => `<article class="quality-item"><strong><span>${esc(row.code)}</span><span>${pct(row.coverage)}</span></strong><p>${esc(row.source)}</p><div class="quality-meta"><span>${esc(row.originalStart)} → ${esc(row.originalEnd)}</span><span>${Number(row.originalPoints).toLocaleString("zh-CN")} 原始点</span><span>${Number(row.forwardFilled).toLocaleString("zh-CN")} 前值填充</span></div></article>`).join("");
   const warnings = [...analysis.warnings];
   if (!analysis.optimized.feasible) warnings.unshift("本轮没有找到同时满足年化 7%–10% 与最大回撤≤15%的优化候选；候选栏只是有效样本中的最佳风险调整结果，不应称为达标方案。");
@@ -265,9 +275,9 @@ async function runBacktest() {
     const analysis = analyzePortfolioData(normalized, prices, {
       rebalance: $("#rebalance").value,
       transactionCostBps: Number($("#costBps").value || 5),
-      maxDrawdown: 0.15,
-      targetLow: 0.07,
-      targetHigh: 0.10,
+      maxDrawdown: STRATEGY_POLICY.maxDrawdown,
+      targetLow: STRATEGY_POLICY.targetReturn[0],
+      targetHigh: STRATEGY_POLICY.targetReturn[1],
       samples: 2500,
       seed: 42,
     });
@@ -293,3 +303,4 @@ document.querySelectorAll("[data-add]").forEach((button) => button.addEventListe
 $("#runButton").addEventListener("click", runBacktest);
 renderAssets();
 renderSummary();
+renderStrategy();
