@@ -3,119 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AI 多资产配置工作台 · 公共演示</title>
+  <meta http-equiv="refresh" content="0;url=https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">
+  <link rel="canonical" href="https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">
+  <title>真实资产配置回测 · 新地址</title>
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--line:#e5e9f0;--text:#172033;--muted:#667085;--blue:#3867e8;--blue-soft:#eef3ff;--green:#079669;--red:#d92d20;--gold:#e6a817;--shadow:0 8px 28px rgba(30,45,75,.065)}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}button,input,select{font:inherit}main{max-width:1320px;margin:auto;padding:32px 22px 64px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:750}h1{font-size:34px;line-height:1.15;margin:5px 0 7px}h2{font-size:20px;margin:0 0 14px}h3{font-size:16px;margin:0}.sub{color:var(--muted);max-width:840px}.notice{margin:22px 0;padding:12px 16px;border:1px solid #e9cf80;background:#fff9e8;border-radius:12px;color:#795c0b}.pills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 22px}.pill{padding:5px 10px;border-radius:999px;background:var(--blue-soft);color:#2f4ba8;font-size:12px;font-weight:650}.tabs{display:flex;gap:5px;overflow:auto;border-bottom:1px solid var(--line);margin-bottom:18px}.tab{border:0;background:transparent;padding:11px 15px;color:var(--muted);font-weight:650;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}.tab.active{color:var(--blue);border-bottom-color:var(--blue)}.panel{display:none}.panel.active{display:block}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric,.card{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}.metric{padding:15px 17px;color:var(--muted)}.metric strong{display:block;color:var(--text);font-size:24px;margin-top:3px}.metric small{color:var(--green)}.asset-list{display:grid;gap:10px}.asset-card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px 16px;display:grid;grid-template-columns:1.05fr 1fr 1.25fr 1fr;gap:12px;align-items:end}.field label{display:block;color:var(--muted);font-size:12px;font-weight:650;margin:0 0 5px}.field input,.field select{width:100%;border:1px solid #ccd3df;border-radius:9px;padding:9px 10px;background:#fff;color:var(--text)}.resolved{grid-column:1/-1;color:var(--green);font-weight:650;font-size:13px;margin-top:-3px}.actions{display:flex;gap:10px;margin-top:14px}.button{border:0;border-radius:10px;padding:10px 16px;background:var(--blue);color:#fff;font-weight:700;cursor:pointer}.button.secondary{background:#fff;color:var(--blue);border:1px solid #b8c7ef}.button:disabled{opacity:.5;cursor:not-allowed}.window-row{display:flex;gap:7px;margin-bottom:15px}.window{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;cursor:pointer}.window.active{background:var(--blue);color:#fff;border-color:var(--blue)}.two{display:grid;grid-template-columns:1.55fr 1fr;gap:14px}.card{padding:18px}.chart{width:100%;height:310px;display:block}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{color:var(--muted);font-size:12px}td.num{text-align:right;font-variant-numeric:tabular-nums}.positive{color:var(--green)}.negative{color:var(--red)}.quality{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source{padding:14px;background:#fafbfc;border:1px solid var(--line);border-radius:12px}.source b{display:block;margin-bottom:3px}.muted{color:var(--muted)}.ai-box{max-width:760px}.textarea{width:100%;height:100px;border:1px solid #ccd3df;border-radius:10px;padding:11px;resize:vertical}.footer{margin-top:28px;color:var(--muted);font-size:12px}
-    @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}.asset-card{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.quality{grid-template-columns:1fr}}
-    @media(max-width:560px){main{padding:22px 14px 44px}h1{font-size:28px}.asset-card,.metrics{grid-template-columns:1fr}.actions{flex-direction:column}.button{width:100%}}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f7f4;color:#17211b;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}
+    main{width:min(560px,calc(100% - 40px));padding:34px;border:1px solid #dbe4dc;border-radius:20px;background:#fff;box-shadow:0 18px 50px rgba(28,55,36,.08)}
+    h1{margin:0 0 10px;font-size:28px}p{color:#5f6e63}a{display:inline-block;margin-top:8px;padding:11px 18px;border-radius:10px;background:#166534;color:#fff;text-decoration:none;font-weight:700}
   </style>
 </head>
 <body>
-<main>
-  <div class="eyebrow">Portfolio Research Console</div>
-  <h1>AI 多资产配置工作台</h1>
-  <div class="sub">用统一口径比较现金、债券、宽基、黄金与海外资产。这个页面用于公开展示产品交互，完整行情回测运行在私有本地版本。</div>
-  <div class="notice">公开版仅使用合成数据，不请求行情、不调用 DeepSeek、不保存输入，也不包含任何个人资产信息。页面数字不构成收益承诺或投资建议。</div>
-  <div class="pills"><span class="pill">卡片式配置</span><span class="pill">代码自动回显演示</span><span class="pill">1 / 3 / 5 / 10 年</span><span class="pill">约束优化</span><span class="pill">仅供研究</span></div>
-
-  <nav class="tabs" aria-label="工作台页面">
-    <button class="tab active" data-tab="config">配置资产</button>
-    <button class="tab" data-tab="overview">回测总览</button>
-    <button class="tab" data-tab="optimize">配置优化</button>
-    <button class="tab" data-tab="risk">风险诊断</button>
-    <button class="tab" data-tab="ai">AI 解读</button>
-  </nav>
-
-  <section id="config" class="panel active">
-    <div class="metrics">
-      <div class="metric">模拟组合总额<strong id="total">¥1,000,000</strong></div>
-      <div class="metric">资产项数<strong id="count">7 项</strong></div>
-      <div class="metric">海外资产<strong id="usAmount">¥100,000</strong><small id="usRatio">10.0%</small></div>
-      <div class="metric">现金储备<strong id="cashAmount">¥50,000</strong><small id="cashRatio">5.0%</small></div>
-    </div>
-    <h2>资产卡片</h2>
-    <div class="muted" style="margin:-8px 0 12px">输入演示代码后，名称在卡片内自动回显；金额直接修改，不使用表格式输入。</div>
-    <div id="assetList" class="asset-list"></div>
-    <div class="actions"><button class="button secondary" id="addAsset">＋ 添加资产</button><button class="button" id="runDemo">运行合成回测</button></div>
-  </section>
-
-  <section id="overview" class="panel">
-    <div class="window-row" id="windows"></div>
-    <div class="metrics">
-      <div class="metric">累计收益<strong id="mTotal">—</strong></div>
-      <div class="metric">年化收益<strong id="mAnnual">—</strong></div>
-      <div class="metric">最大回撤<strong id="mDrawdown">—</strong></div>
-      <div class="metric">年化波动<strong id="mVol">—</strong></div>
-    </div>
-    <div class="two">
-      <div class="card"><h2>合成组合净值</h2><canvas class="chart" id="navChart" width="820" height="310"></canvas></div>
-      <div class="card table-wrap"><h2>多期限对比</h2><table id="windowTable"></table></div>
-    </div>
-  </section>
-
-  <section id="optimize" class="panel">
-    <div class="metrics">
-      <div class="metric">优化年化收益<strong>7.52%</strong><small>合成示例</small></div>
-      <div class="metric">优化最大回撤<strong>-8.10%</strong></div>
-      <div class="metric">优化年化波动<strong>5.36%</strong></div>
-      <div class="metric">优化夏普比率<strong>1.40</strong></div>
-    </div>
-    <div class="card table-wrap"><h2>约束优化参考</h2><div class="muted" style="margin:-8px 0 10px">固定现金 5%、海外资产 10%，并限制单一资产不超过 35%。以下权重只用于演示。</div><table id="optTable"></table><button class="button" id="applyOpt" style="margin-top:14px">把演示优化金额应用到卡片</button></div>
-  </section>
-
-  <section id="risk" class="panel">
-    <div class="two">
-      <div class="card"><h2>权重与模拟风险贡献</h2><canvas class="chart" id="riskChart" width="820" height="310"></canvas></div>
-      <div class="card"><h2>数据质量与来源</h2><div class="quality"><div class="source"><b>场外基金</b><span class="muted">东方财富/天天基金</span></div><div class="source"><b>A股与 ETF</b><span class="muted">腾讯前复权行情</span></div><div class="source"><b>美股与汇率</b><span class="muted">Yahoo Finance + USD/CNY</span></div></div><p class="muted">完整版本只使用所有资产的共同历史区间，并显示覆盖率、原始数据点和前向填充点。</p></div>
-    </div>
-  </section>
-
-  <section id="ai" class="panel">
-    <div class="card ai-box"><h2>DeepSeek 审慎解读</h2><p class="muted">公开演示不连接任何 API。私有本地版可将确定性回测结果发送给 DeepSeek，由 AI 解释收益来源、回撤、集中度和数据缺口；AI 不生成行情数字。</p><textarea class="textarea" disabled>请评估组合的收益来源、最大回撤、集中度和不同期限稳定性。</textarea><button class="button" disabled style="margin-top:12px">公开版已禁用 API</button></div>
-  </section>
-
-  <div class="footer">AI Portfolio Lab · Static sanitized demo · Synthetic figures only</div>
-</main>
-<script>
-  const names={CASH:'现金备用金','511010':'国债ETF国泰','511220':'城投债ETF海富通','510300':'沪深300ETF华泰柏瑞','510880':'红利ETF华泰柏瑞','518880':'黄金ETF华安','510050':'上证50ETF华夏',SPY:'SPDR S&P 500 ETF Trust',QQQ:'Invesco QQQ Trust'};
-  const categories=['现金','固收','A股宽基','黄金','美股','其他'];
-  let assets=[
-    {type:'现金',category:'现金',code:'CASH',amount:50000},
-    {type:'ETF',category:'固收',code:'511010',amount:250000},
-    {type:'ETF',category:'固收',code:'511220',amount:100000},
-    {type:'ETF',category:'A股宽基',code:'510300',amount:200000},
-    {type:'ETF',category:'A股宽基',code:'510880',amount:150000},
-    {type:'ETF',category:'黄金',code:'518880',amount:150000},
-    {type:'美股/美股ETF',category:'美股',code:'SPY',amount:100000}
-  ];
-  const optimized={'CASH':.05,'511010':.28,'511220':.17,'510300':.12,'510880':.10,'518880':.18,'SPY':.10};
-  const windows={1:{total:.081,annual:.081,dd:-.052,vol:.067},3:{total:.286,annual:.087,dd:-.071,vol:.062},5:{total:.421,annual:.073,dd:-.083,vol:.059},10:{total:1.04,annual:.074,dd:-.099,vol:.061}};
-  let activeWindow=10;
-  const yuan=n=>'¥'+Math.round(n).toLocaleString('zh-CN');
-  const pct=n=>(n*100).toFixed(2)+'%';
-  const resolvedText=a=>`✓ ${names[a.code]||'演示代码未收录'} · ${a.type==='美股/美股ETF'?'Yahoo Finance · 含汇率':a.type==='现金'?'按年化代理值计息':'行情名称回显演示'}`;
-  function renderAssets(){
-    assetList.innerHTML=assets.map((a,i)=>`<div class="asset-card"><div class="field"><label>资产类型</label><select data-i="${i}" data-k="type"><option ${a.type==='现金'?'selected':''}>现金</option><option ${a.type==='ETF'?'selected':''}>ETF</option><option ${a.type==='基金'?'selected':''}>基金</option><option ${a.type==='股票'?'selected':''}>股票</option><option ${a.type==='美股/美股ETF'?'selected':''}>美股/美股ETF</option></select></div><div class="field"><label>资产类别</label><select data-i="${i}" data-k="category">${categories.map(c=>`<option ${a.category===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="field"><label>资产代码</label><input data-i="${i}" data-k="code" value="${a.code}" ${a.type==='现金'?'disabled':''}></div><div class="field"><label>配置金额（元）</label><input data-i="${i}" data-k="amount" type="number" min="0" step="10000" value="${a.amount}"></div><div class="resolved">${resolvedText(a)}</div></div>`).join('');
-    document.querySelectorAll('[data-k]').forEach(el=>{
-      const i=+el.dataset.i,k=el.dataset.k;
-      if(k==='code') el.oninput=()=>{el.value=el.value.toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);assets[i].code=el.value;el.closest('.asset-card').querySelector('.resolved').textContent=resolvedText(assets[i])};
-      else if(k==='amount') el.oninput=()=>{assets[i].amount=Math.max(0,+el.value||0);updateSummary()};
-      else el.onchange=()=>{assets[i][k]=el.value;if(k==='type'&&el.value==='现金'){assets[i].code='CASH';assets[i].category='现金'}renderAssets()};
-    });updateSummary();
-  }
-  function updateSummary(){const total=assets.reduce((s,a)=>s+a.amount,0),us=assets.filter(a=>a.category==='美股').reduce((s,a)=>s+a.amount,0),cash=assets.filter(a=>a.category==='现金').reduce((s,a)=>s+a.amount,0);document.getElementById('total').textContent=yuan(total);count.textContent=assets.length+' 项';usAmount.textContent=yuan(us);cashAmount.textContent=yuan(cash);usRatio.textContent=total?pct(us/total):'—';cashRatio.textContent=total?pct(cash/total):'—'}
-  function renderWindows(){document.getElementById('windows').innerHTML=Object.keys(windows).map(y=>`<button class="window ${+y===activeWindow?'active':''}" data-y="${y}">${y}年</button>`).join('');document.querySelectorAll('.window').forEach(b=>b.onclick=()=>{activeWindow=+b.dataset.y;renderOverview()})}
-  function renderOverview(){renderWindows();const m=windows[activeWindow];mTotal.textContent=pct(m.total);mAnnual.textContent=pct(m.annual);mDrawdown.textContent=pct(m.dd);mVol.textContent=pct(m.vol);windowTable.innerHTML='<tr><th>期限</th><th>年化收益</th><th>最大回撤</th><th>波动</th></tr>'+Object.entries(windows).map(([y,v])=>`<tr><td>${y}年</td><td class="num positive">${pct(v.annual)}</td><td class="num negative">${pct(v.dd)}</td><td class="num">${pct(v.vol)}</td></tr>`).join('');drawLine(m);}
-  function drawLine(m){const c=navChart,x=c.getContext('2d'),W=c.width,H=c.height;x.clearRect(0,0,W,H);x.strokeStyle='#e5e9f0';x.lineWidth=1;for(let i=1;i<5;i++){x.beginPath();x.moveTo(0,H*i/5);x.lineTo(W,H*i/5);x.stroke()}x.strokeStyle='#3867e8';x.lineWidth=3;x.beginPath();for(let i=0;i<120;i++){const trend=1+m.total*i/119,noise=(Math.sin(i*.38)+Math.sin(i*.11))*m.vol*.42,y=H-(trend+noise-.92)*H/(m.total+0.25);i?x.lineTo(i*W/119,y):x.moveTo(0,y)}x.stroke()}
-  function renderOptimize(){const total=assets.reduce((s,a)=>s+a.amount,0)||1;optTable.innerHTML='<tr><th>代码</th><th>资产</th><th>当前权重</th><th>优化权重</th><th>优化金额</th></tr>'+assets.map(a=>`<tr><td>${a.code}</td><td>${names[a.code]||'未识别'}</td><td class="num">${pct(a.amount/total)}</td><td class="num">${pct(optimized[a.code]||0)}</td><td class="num">${yuan(total*(optimized[a.code]||0))}</td></tr>`).join('')}
-  function drawRisk(){const c=riskChart,x=c.getContext('2d'),W=c.width,H=c.height,total=assets.reduce((s,a)=>s+a.amount,0)||1,barW=Math.min(58,(W-70)/assets.length*.55);x.clearRect(0,0,W,H);assets.forEach((a,i)=>{const w=a.amount/total,r=Math.min(.95,w*(a.category==='A股宽基'||a.category==='美股'?1.65:a.category==='黄金'?1.1:.55)),cx=55+i*(W-70)/assets.length;x.fillStyle='#8eb0f5';x.fillRect(cx,H-45-w*(H-75),barW,w*(H-75));x.fillStyle='#38b28a';x.fillRect(cx+barW+4,H-45-r*(H-75),barW,r*(H-75));x.fillStyle='#667085';x.font='11px sans-serif';x.fillText(a.code,cx,H-22)})}
-  function showTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='overview')renderOverview();if(id==='optimize')renderOptimize();if(id==='risk')drawRisk()}
-  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-  addAsset.onclick=()=>{assets.push({type:'ETF',category:'其他',code:'510050',amount:50000});renderAssets()};
-  runDemo.onclick=()=>showTab('overview');
-  applyOpt.onclick=()=>{const total=assets.reduce((s,a)=>s+a.amount,0)||1;assets.forEach(a=>{if(optimized[a.code]!=null)a.amount=Math.round(total*optimized[a.code])});renderAssets();showTab('config')};
-  renderAssets();renderOverview();renderOptimize();
-</script>
+  <main>
+    <h1>已切换到真实行情版</h1>
+    <p>旧版合成数据演示已经停用。新版本会显示行情来源和数据截止日；真实行情获取失败时会明确报错，不会补造走势或收益。</p>
+    <a href="https://real-portfolio-lab-cn.fhvwtbfbvg.chatgpt.site/">进入真实资产配置回测</a>
+  </main>
 </body>
 </html>
