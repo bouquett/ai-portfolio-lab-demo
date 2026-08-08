@@ -36,6 +36,21 @@ test("resolved fund names refresh the visible strategy-role label", async () => 
   assert.match(source, /querySelector\("\.asset-meta"\)/);
 });
 
+test("each asset card offers an accessible multi-period single-asset backtest", async () => {
+  const app = await readFile(new URL("app.mjs", root), "utf8");
+  const loader = await readFile(new URL("lib/market-data-browser.mjs", root), "utf8");
+  const css = await readFile(new URL("styles.css", root), "utf8");
+
+  assert.match(app, /单资产回溯/);
+  assert.match(app, /aria-expanded/);
+  assert.match(app, /ASSET_BACKTEST_PERIODS/);
+  assert.match(app, /年化收益/);
+  assert.match(app, /最大回撤/);
+  assert.match(loader, /export async function loadAssetHistory/);
+  assert.match(css, /\.asset-backtest-panel/);
+  assert.match(css, /\.asset-periods/);
+});
+
 test("bundled SPY RMB snapshot contains a long, traceable real history", async () => {
   const payload = JSON.parse(await readFile(new URL("data/us/SPY.json", root), "utf8"));
   assert.equal(payload.code, "SPY");

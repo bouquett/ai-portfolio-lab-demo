@@ -1,10 +1,13 @@
 import { analyzePortfolioData, normalizeAssets } from "./lib/analysis.mjs";
-import { loadPortfolioPrices, resolveAssetName } from "./lib/market-data-browser.mjs";
+import { analyzeAssetHistory, ASSET_BACKTEST_PERIODS } from "./lib/asset-backtest.mjs";
+import { loadAssetHistory, loadPortfolioPrices, resolveAssetName } from "./lib/market-data-browser.mjs";
 import { createDefaultAssets, inferSleeve, STRATEGY_POLICY } from "./lib/strategy.mjs";
 
 const ASSET_TYPES = ["现金", "债券基金", "宽基基金", "其他场外基金", "ETF", "股票", "美股/美股ETF"];
 const CATEGORIES = ["现金", "固收", "A股宽基", "黄金", "美股", "其他"];
 const lookupTimers = new Map();
+const assetBacktests = new Map();
+const assetHistoryCache = new Map();
 
 let assets = createDefaultAssets();
 
@@ -86,9 +89,114 @@ function categoryOptions(selected) {
   return CATEGORIES.map((category) => `<option value="${esc(category)}" ${category === selected ? "selected" : ""}>${esc(category)}</option>`).join("");
 }
 
+function assetSignature(asset) {
+  const cashRate = asset.type === "现金" ? Number(asset.cashRate ?? 0.015) : "";
+  return `${asset.type}:${String(asset.code ?? "").toUpperCase()}:${cashRate}`;
+}
+
+function freshAssetBacktestState(asset) {
+  return {
+    signature: assetSignature(asset),
+    open: false,
+    status: "idle",
+    years: 3,
+    analysis: null,
+    error: "",
+  };
+}
+
+function getAssetBacktestState(asset) {
+  const signature = assetSignature(asset);
+  const existing = assetBacktests.get(asset.id);
+  if (existing?.signature === signature) return existing;
+  const state = freshAssetBacktestState(asset);
+  assetBacktests.set(asset.id, state);
+  return state;
+}
+
+function trendChart(window, assetName) {
+  const trend = window?.trend ?? [];
+  if (trend.length < 2) return `<div class="asset-backtest-empty">该期限没有足够数据绘制走势。</div>`;
+  const values = trend.map((point) => point.value);
+  const rawMin = Math.min(...values);
+  const rawMax = Math.max(...values);
+  const rawSpread = Math.max(rawMax - rawMin, Math.abs(rawMax) * 0.015, 0.02);
+  const min = rawMin - rawSpread * 0.12;
+  const max = rawMax + rawSpread * 0.12;
+  const spread = max - min;
+  const left = 48;
+  const right = 700;
+  const top = 20;
+  const bottom = 174;
+  const x = (index) => left + index / Math.max(1, trend.length - 1) * (right - left);
+  const y = (value) => bottom - (value - min) / spread * (bottom - top);
+  const path = trend.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
+  const grid = Array.from({ length: 4 }, (_, index) => {
+    const yy = top + index / 3 * (bottom - top);
+    const value = max - index / 3 * spread;
+    return `<line class="asset-trend-grid" x1="${left}" x2="${right}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"></line><text class="asset-trend-label" x="4" y="${(yy + 4).toFixed(1)}">${number(value, 2)}</text>`;
+  }).join("");
+  const baselineY = y(1);
+  const baseline = baselineY >= top && baselineY <= bottom
+    ? `<line class="asset-trend-baseline" x1="${left}" x2="${right}" y1="${baselineY.toFixed(1)}" y2="${baselineY.toFixed(1)}"></line>`
+    : "";
+  return `<svg class="asset-trend-chart" viewBox="0 0 720 210" role="img" aria-label="${esc(assetName)} ${window.years}年标准化走势">
+    <title>${esc(assetName)} ${window.years}年标准化走势，起点为 1.00</title>
+    ${grid}${baseline}<path class="asset-trend-line" d="${path}"></path>
+    <circle class="asset-trend-point" cx="${x(0).toFixed(1)}" cy="${y(trend[0].value).toFixed(1)}" r="3"></circle>
+    <circle class="asset-trend-point" cx="${x(trend.length - 1).toFixed(1)}" cy="${y(trend.at(-1).value).toFixed(1)}" r="3"></circle>
+    <text class="asset-trend-label" x="${left}" y="202">${esc(window.startDate)}</text>
+    <text class="asset-trend-label" text-anchor="end" x="${right}" y="202">${esc(window.endDate)}</text>
+  </svg>`;
+}
+
+function assetBacktestReady(asset, state) {
+  const window = state.analysis?.windows?.[state.years];
+  if (!window) return `<div class="asset-backtest-empty">该资产的真实历史不足 ${state.years} 年。</div>`;
+  const drawdownNote = window.drawdown.value < -0.00005
+    ? `${window.drawdown.peakDate} → ${window.drawdown.troughDate}`
+    : "期间无净值回撤";
+  return `<div class="asset-backtest-head">
+      <div><strong>${esc(state.analysis.name)}</strong><span>${state.years}年标准化走势 · 起点 = 1.00</span></div>
+      <div class="asset-periods" role="group" aria-label="选择单资产回溯期限">
+        ${ASSET_BACKTEST_PERIODS.map((years) => `<button type="button" data-action="asset-backtest-period" data-years="${years}" class="asset-period-button ${years === state.years ? "active" : ""}" ${state.analysis.windows[years] ? "" : `disabled title="真实历史不足 ${years} 年"`} aria-pressed="${years === state.years}">${years}年</button>`).join("")}
+      </div>
+    </div>
+    <div class="asset-backtest-kpis">
+      <div class="asset-backtest-kpi"><span>年化收益</span><strong class="${window.metrics.annualReturn >= 0 ? "positive" : "negative"}">${pct(window.metrics.annualReturn)}</strong><small>${window.actualYears.toFixed(2)} 个自然年</small></div>
+      <div class="asset-backtest-kpi"><span>累计收益</span><strong class="${window.metrics.totalReturn >= 0 ? "positive" : "negative"}">${pct(window.metrics.totalReturn)}</strong><small>${window.startDate} 起</small></div>
+      <div class="asset-backtest-kpi"><span>最大回撤</span><strong class="negative">${pct(window.metrics.maxDrawdown)}</strong><small>${esc(drawdownNote)}</small></div>
+    </div>
+    <div class="asset-chart-shell">${trendChart(window, state.analysis.name)}</div>
+    <div class="asset-backtest-source"><span>数据源：${esc(state.analysis.source || "未标注")}</span><span>${esc(window.startDate)} 至 ${esc(window.endDate)}</span><span>${Number(window.points).toLocaleString("zh-CN")} 个${asset.type === "现金" ? "计算点" : "真实数据点"}</span></div>
+    ${asset.type === "现金" ? `<p class="asset-backtest-assumption">现金曲线由你填写的年化代理值复利推算，不是市场行情，也不参与“真实行情”表述。</p>` : ""}`;
+}
+
+function assetBacktestPanel(asset, state) {
+  if (state.status === "loading") {
+    return `<div class="asset-backtest-message loading"><span class="asset-backtest-spinner" aria-hidden="true"></span><div><strong>正在获取该资产真实行情</strong><p>首次展开读取最长 10 年历史，之后切换期限无需重新请求。</p></div></div>`;
+  }
+  if (state.status === "error") {
+    return `<div class="asset-backtest-message error"><div><strong>单资产回溯失败</strong><p>${esc(state.error)}</p></div><button type="button" class="asset-backtest-retry" data-action="asset-backtest-retry">重试</button></div>`;
+  }
+  if (state.status === "ready") return assetBacktestReady(asset, state);
+  return `<div class="asset-backtest-message"><div><strong>准备读取真实历史</strong><p>展开后展示可用的 1 / 3 / 5 / 10 年走势与风险指标。</p></div></div>`;
+}
+
+function assetBacktestSummary(asset, state) {
+  if (!codeIsValid(asset)) return "输入有效代码后可用";
+  const window = state.analysis?.windows?.[state.years];
+  if (state.status === "ready" && window) return `${state.years}年年化 ${pct(window.metrics.annualReturn)} · 回撤 ${pct(window.metrics.maxDrawdown)}`;
+  if (state.status === "loading") return "正在读取真实行情…";
+  if (state.status === "error") return "读取失败，可展开重试";
+  return "走势 · 年化收益 · 最大回撤";
+}
+
 function assetCard(asset, index) {
   const status = resolvedText(asset);
   const cash = asset.type === "现金";
+  const backtest = getAssetBacktestState(asset);
+  const panelId = `asset-backtest-${asset.id}`;
   return `<article class="asset-card" data-id="${esc(asset.id)}">
     <div class="asset-top">
       <div class="asset-title"><span class="asset-index">${String(index + 1).padStart(2, "0")}</span><div><strong class="asset-name">${esc(asset.name || asset.code || "未识别资产")}</strong><div class="asset-meta">${esc(asset.sleeve || "未设置策略角色")}${asset.manager ? ` · ${esc(asset.manager)}` : ""}</div><div class="resolved ${status.cls}">${esc(status.text)}</div></div></div>
@@ -101,7 +209,63 @@ function assetCard(asset, index) {
       <div class="field"><label>配置金额（元）<input data-field="amount" type="number" min="0" step="10000" value="${Number(asset.amount) || ""}" placeholder="0"></label></div>
       ${cash ? `<div class="field"><label>现金年化代理<input data-field="cashRate" type="number" min="-5" max="20" step="0.1" value="${(Number(asset.cashRate) * 100).toFixed(1)}"></label></div>` : ""}
     </div>
+    <div class="asset-backtest-disclosure">
+      <button type="button" class="asset-backtest-toggle" data-action="asset-backtest" aria-expanded="${backtest.open}" aria-controls="${esc(panelId)}" ${codeIsValid(asset) ? "" : "disabled"}>
+        <span class="asset-backtest-toggle-copy"><strong>单资产回溯</strong><small data-backtest-summary>${esc(assetBacktestSummary(asset, backtest))}</small></span>
+        <span class="asset-backtest-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div id="${esc(panelId)}" class="asset-backtest-panel" ${backtest.open ? "" : "hidden"}>${backtest.open ? assetBacktestPanel(asset, backtest) : ""}</div>
+    </div>
   </article>`;
+}
+
+function invalidateAssetBacktest(card, asset) {
+  assetBacktests.set(asset.id, freshAssetBacktestState(asset));
+  const toggle = card.querySelector('[data-action="asset-backtest"]');
+  const panel = card.querySelector(".asset-backtest-panel");
+  if (toggle) {
+    toggle.disabled = !codeIsValid(asset);
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.querySelector("[data-backtest-summary]").textContent = assetBacktestSummary(asset, getAssetBacktestState(asset));
+  }
+  if (panel) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+  }
+}
+
+async function loadSingleAssetBacktest(id, force = false) {
+  const asset = assets.find((item) => item.id === id);
+  if (!asset || !codeIsValid(asset)) return;
+  const signature = assetSignature(asset);
+  try {
+    if (force) assetHistoryCache.delete(signature);
+    let history = assetHistoryCache.get(signature);
+    if (!history) {
+      history = await loadAssetHistory({ ...asset }, 10);
+      assetHistoryCache.set(signature, history);
+    }
+    const current = assets.find((item) => item.id === id);
+    if (!current || assetSignature(current) !== signature) return;
+    const analysis = analyzeAssetHistory(history);
+    if (!analysis.availableYears.length) throw new Error(`${current.code} 的真实历史不足 1 年`);
+    const state = getAssetBacktestState(current);
+    state.analysis = analysis;
+    state.years = analysis.windows[state.years] ? state.years : Math.max(...analysis.availableYears);
+    state.status = "ready";
+    state.error = "";
+    current.name = analysis.name || current.name;
+    current.source = analysis.source || current.source;
+    current.sleeve = inferSleeve(current.category, current.name);
+    current.lookup = "ok";
+  } catch (error) {
+    const current = assets.find((item) => item.id === id);
+    if (!current || assetSignature(current) !== signature) return;
+    const state = getAssetBacktestState(current);
+    state.status = "error";
+    state.error = error instanceof Error ? error.message : String(error);
+  }
+  renderAssets();
 }
 
 function renderAssets() {
@@ -109,7 +273,9 @@ function renderAssets() {
   $("#assetList").querySelectorAll(".asset-card").forEach((card) => {
     const id = card.dataset.id;
     card.querySelector('[data-action="remove"]').addEventListener("click", () => {
+      clearTimeout(lookupTimers.get(id));
       lookupTimers.delete(id);
+      assetBacktests.delete(id);
       assets = assets.filter((asset) => asset.id !== id);
       renderAssets();
       renderSummary();
@@ -117,6 +283,9 @@ function renderAssets() {
     });
     card.querySelector('[data-field="type"]').addEventListener("change", (event) => {
       const asset = assets.find((item) => item.id === id);
+      clearTimeout(lookupTimers.get(id));
+      lookupTimers.delete(id);
+      assetBacktests.delete(id);
       asset.type = event.target.value;
       asset.category = defaultCategory(asset.type);
       asset.code = asset.type === "现金" ? "CASH" : "";
@@ -150,6 +319,7 @@ function renderAssets() {
       asset.manager = "";
       asset.lookup = "idle";
       updateResolved(card, asset);
+      invalidateAssetBacktest(card, asset);
       clearTimeout(lookupTimers.get(id));
       if (codeIsValid(asset)) lookupTimers.set(id, setTimeout(() => lookupAsset(id), 450));
     });
@@ -160,7 +330,41 @@ function renderAssets() {
     });
     const cashRate = card.querySelector('[data-field="cashRate"]');
     if (cashRate) cashRate.addEventListener("input", (event) => {
-      assets.find((item) => item.id === id).cashRate = Number(event.target.value) / 100;
+      const asset = assets.find((item) => item.id === id);
+      asset.cashRate = Number(event.target.value) / 100;
+      invalidateAssetBacktest(card, asset);
+      $("#results").hidden = true;
+    });
+    card.querySelector('[data-action="asset-backtest"]').addEventListener("click", () => {
+      const asset = assets.find((item) => item.id === id);
+      if (!asset || !codeIsValid(asset)) return;
+      const state = getAssetBacktestState(asset);
+      state.open = !state.open;
+      const shouldLoad = state.open && ["idle", "error"].includes(state.status);
+      if (shouldLoad) {
+        state.status = "loading";
+        state.error = "";
+      }
+      renderAssets();
+      if (shouldLoad) void loadSingleAssetBacktest(id);
+    });
+    card.querySelectorAll('[data-action="asset-backtest-period"]').forEach((button) => button.addEventListener("click", () => {
+      const asset = assets.find((item) => item.id === id);
+      const state = asset ? getAssetBacktestState(asset) : null;
+      const years = Number(button.dataset.years);
+      if (!state?.analysis?.windows?.[years]) return;
+      state.years = years;
+      renderAssets();
+    }));
+    const retry = card.querySelector('[data-action="asset-backtest-retry"]');
+    if (retry) retry.addEventListener("click", () => {
+      const asset = assets.find((item) => item.id === id);
+      if (!asset) return;
+      const state = getAssetBacktestState(asset);
+      state.status = "loading";
+      state.error = "";
+      renderAssets();
+      void loadSingleAssetBacktest(id, true);
     });
   });
 }
@@ -272,6 +476,10 @@ async function runBacktest() {
   try {
     const normalized = normalizeAssets(assets);
     const prices = await loadPortfolioPrices(normalized, 10);
+    for (const history of prices.histories ?? []) {
+      const asset = normalized.find((item) => item.code === history.code);
+      if (asset) assetHistoryCache.set(assetSignature(asset), history);
+    }
     const analysis = analyzePortfolioData(normalized, prices, {
       rebalance: $("#rebalance").value,
       transactionCostBps: Number($("#costBps").value || 5),
