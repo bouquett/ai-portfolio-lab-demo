@@ -12,6 +12,8 @@ test("GitHub Pages entrypoint is the real-data app and no longer redirects", asy
   assert.doesNotMatch(html, /real-portfolio-lab-cn\.fhvwtbfbvg\.chatgpt\.site/);
   assert.match(html, /id="assetList"/);
   assert.match(html, /固收先分散/);
+  assert.match(html, /不含专门城投债产品/);
+  assert.match(html, /穿透.*持仓/);
   assert.match(html, /id="strategyGrid"/);
 });
 

@@ -22,6 +22,10 @@ test("default research plan matches the 2m funding envelope and fixed-income-fir
   assert.equal(new Set(fixed.map((asset) => asset.sleeve)).size, 4);
   assert.equal(new Set(fixed.map((asset) => asset.manager)).size, 4);
   assert.ok(Math.max(...fixed.map((asset) => asset.amount)) <= 300_000);
+  assert.deepEqual(fixed.map((asset) => asset.code).sort(), ["000128", "000191", "161119", "270048"]);
+  assert.ok(fixed.every((asset) => asset.type === "债券基金"));
+  assert.ok(fixed.every((asset) => !/城投/.test(`${asset.name}${asset.sleeve}`)));
+  assert.ok(DEFAULT_ASSETS.every((asset) => !["511010", "511220", "511880"].includes(asset.code)));
   assert.deepEqual(domesticBroad.map((asset) => asset.code).sort(), ["510300", "510500"]);
   assert.deepEqual(STRATEGY_POLICY.targetReturn, [0.07, 0.10]);
   assert.equal(STRATEGY_POLICY.maxDrawdown, 0.15);
@@ -51,7 +55,9 @@ test("allocation policy rejects concentrated fixed-income and broad-index sleeve
 test("fixed-income role is reclassified from the resolved fund name", () => {
   assert.equal(inferSleeve("固收", "国泰上证5年期国债ETF"), "利率债");
   assert.equal(inferSleeve("固收", "海富通上证城投债ETF"), "城投债");
+  assert.equal(inferSleeve("固收", "易方达中债新综指发起式(LOF)A"), "综合债券指数");
   assert.equal(inferSleeve("固收", "易方达信用债债券A"), "信用债");
+  assert.equal(inferSleeve("固收", "广发纯债债券A"), "纯债");
   assert.equal(inferSleeve("固收", "银华日利ETF"), "货币与短久期");
   assert.equal(inferSleeve("A股宽基", "沪深300ETF"), "A股宽基");
 });
