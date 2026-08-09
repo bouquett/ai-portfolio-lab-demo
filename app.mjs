@@ -47,9 +47,10 @@ function newAsset(type) {
 
 function totals() {
   const total = assets.reduce((sum, asset) => sum + (Number(asset.amount) || 0), 0);
-  const us = assets.filter((asset) => asset.category === "美股").reduce((sum, asset) => sum + (Number(asset.amount) || 0), 0);
   const cash = assets.filter((asset) => asset.category === "现金").reduce((sum, asset) => sum + (Number(asset.amount) || 0), 0);
-  return { total, us, cash, rmb: total - us - cash };
+  const fixed = assets.filter((asset) => asset.category === "固收").reduce((sum, asset) => sum + (Number(asset.amount) || 0), 0);
+  const broad = assets.filter((asset) => asset.category === "A股宽基").reduce((sum, asset) => sum + (Number(asset.amount) || 0), 0);
+  return { total, cash, fixed, broad };
 }
 
 function summaryCard(label, value, expected, ok) {
@@ -60,8 +61,8 @@ function renderSummary() {
   const t = totals();
   $("#summaryGrid").innerHTML = [
     summaryCard("组合总金额", money(t.total), t.total === 2_000_000 ? "已对齐目标" : "目标 ¥2,000,000", t.total === 2_000_000),
-    summaryCard("人民币投资资产", money(t.rmb), "目标 ¥1,700,000", t.rmb === 1_700_000),
-    summaryCard("美股 / 美股基金", money(t.us), "目标 ¥200,000", t.us === 200_000),
+    summaryCard("分散固收底仓", money(t.fixed), "目标 ¥1,100,000", t.fixed === 1_100_000),
+    summaryCard("A股宽基", money(t.broad), "目标 ¥800,000", t.broad === 800_000),
     summaryCard("现金备用金", money(t.cash), "目标 ¥100,000", t.cash === 100_000),
   ].join("");
 }

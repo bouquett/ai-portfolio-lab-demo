@@ -13,6 +13,8 @@ test("GitHub Pages entrypoint is the real-data app and no longer redirects", asy
   assert.match(html, /id="assetList"/);
   assert.match(html, /固收先分散/);
   assert.match(html, /不含专门城投债产品/);
+  assert.match(html, /默认组合暂不配置黄金和标普500/);
+  assert.doesNotMatch(html, /固定现金 5%、美股 10%/);
   assert.match(html, /穿透.*持仓/);
   assert.match(html, /id="strategyGrid"/);
 });
@@ -34,6 +36,12 @@ test("responsive result panels contain wide tables instead of widening the page"
 test("resolved fund names refresh the visible strategy-role label", async () => {
   const source = await readFile(new URL("app.mjs", root), "utf8");
   assert.match(source, /querySelector\("\.asset-meta"\)/);
+});
+
+test("analysis warnings use the current zero-gold default instead of the retired 10% target", async () => {
+  const source = await readFile(new URL("lib/analysis.mjs", root), "utf8");
+  assert.match(source, /偏离.*暂不配置黄金/);
+  assert.doesNotMatch(source, /稳态方案的 10%/);
 });
 
 test("each asset card offers an accessible multi-period single-asset backtest", async () => {

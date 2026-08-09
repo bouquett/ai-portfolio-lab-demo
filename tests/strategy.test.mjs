@@ -14,19 +14,22 @@ test("default research plan matches the 2m funding envelope and fixed-income-fir
 
   assert.equal(total, 2_000_000);
   assert.equal(cash.reduce((sum, asset) => sum + asset.amount, 0), 100_000);
-  assert.equal(us.reduce((sum, asset) => sum + asset.amount, 0), 200_000);
-  assert.equal(fixed.reduce((sum, asset) => sum + asset.amount, 0), 900_000);
-  assert.equal(domesticBroad.reduce((sum, asset) => sum + asset.amount, 0), 600_000);
-  assert.equal(gold.reduce((sum, asset) => sum + asset.amount, 0), 200_000);
+  assert.equal(us.reduce((sum, asset) => sum + asset.amount, 0), 0);
+  assert.equal(fixed.reduce((sum, asset) => sum + asset.amount, 0), 1_100_000);
+  assert.equal(domesticBroad.reduce((sum, asset) => sum + asset.amount, 0), 800_000);
+  assert.equal(gold.reduce((sum, asset) => sum + asset.amount, 0), 0);
   assert.equal(fixed.length, 4);
   assert.equal(new Set(fixed.map((asset) => asset.sleeve)).size, 4);
   assert.equal(new Set(fixed.map((asset) => asset.manager)).size, 4);
-  assert.ok(Math.max(...fixed.map((asset) => asset.amount)) <= 300_000);
+  assert.ok(Math.max(...fixed.map((asset) => asset.amount)) <= 350_000);
   assert.deepEqual(fixed.map((asset) => asset.code).sort(), ["000128", "000191", "161119", "270048"]);
   assert.ok(fixed.every((asset) => asset.type === "债券基金"));
   assert.ok(fixed.every((asset) => !/城投/.test(`${asset.name}${asset.sleeve}`)));
   assert.ok(DEFAULT_ASSETS.every((asset) => !["511010", "511220", "511880"].includes(asset.code)));
+  assert.ok(DEFAULT_ASSETS.every((asset) => !["518880", "SPY"].includes(asset.code)));
   assert.deepEqual(domesticBroad.map((asset) => asset.code).sort(), ["510300", "510500"]);
+  assert.deepEqual(STRATEGY_POLICY.buckets.map((bucket) => bucket.weight), [0.55, 0.40, 0.05]);
+  assert.equal(STRATEGY_POLICY.buckets.reduce((sum, bucket) => sum + bucket.amount, 0), 2_000_000);
   assert.deepEqual(STRATEGY_POLICY.targetReturn, [0.07, 0.10]);
   assert.equal(STRATEGY_POLICY.maxDrawdown, 0.15);
 });

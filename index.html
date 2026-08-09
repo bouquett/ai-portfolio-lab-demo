@@ -32,7 +32,7 @@
     </section>
 
     <section class="strategy-intro">
-      <div><strong>固收先分散，再配置宽基</strong><p>先用四种固收风险来源建立底仓，再用中美宽基争取增长；黄金与现金负责缓冲。默认方案不含专门城投债产品；主动债基底层持仓会变化，若要求绝对排除城投，需按最新季报穿透核验持仓。目标是研究约束，不是收益承诺。</p></div>
+      <div><strong>固收先分散，再配置A股宽基</strong><p>先用四种固收风险来源建立底仓，再用沪深300和中证500争取增长，现金负责缓冲。默认组合暂不配置黄金和标普500；这是当前战术假设，不代表它们长期没有配置价值。默认方案不含专门城投债产品；主动债基底层持仓会变化，若要求绝对排除城投，需按最新季报穿透核验持仓。目标是研究约束，不是收益承诺。</p></div>
       <div class="strategy-rule"><span>回测规则</span><b>年度再平衡 · 单边成本 5bp</b><small>实盘建议半年检查；任一大类偏离目标 5 个百分点时提前再平衡。</small></div>
     </section>
     <section class="strategy-grid" id="strategyGrid" aria-label="默认资产配置框架"></section>
@@ -44,7 +44,7 @@
         <select id="rebalance"><option value="每年">每年</option><option value="每季度">每季度</option><option value="每月">每月</option><option value="不再平衡">不再平衡</option></select>
       </label>
       <label>单边成本（基点）<input id="costBps" type="number" min="0" max="100" value="5"></label>
-      <div class="setting-note">在线稳定版的美股日更库当前收录 SPY；其他美股代码可在本地完整版使用。</div>
+      <div class="setting-note">默认比例为固收 55%、A股宽基 40%、现金 5%；黄金和美股仍可作为自定义资产手动添加。</div>
     </section>
 
     <section id="assetList" class="asset-list" aria-label="资产卡片"></section>
@@ -75,7 +75,7 @@
       </section>
       <section class="panel table-panel"><div class="panel-title"><h3>1 / 3 / 5 / 10 年收益与风险</h3><span>年化收益 · 累计收益 · 最大回撤</span></div><div class="table-wrap"><table id="windowTable"></table></div></section>
       <section class="two-column">
-        <section class="panel table-panel"><div class="panel-title"><h3>配置优化候选</h3><span id="optimizerStatus">固定现金 5%、美股 10%，固收单项 5%–20%</span></div><div class="table-wrap"><table id="allocationTable"></table></div></section>
+        <section class="panel table-panel"><div class="panel-title"><h3>配置优化候选</h3><span id="optimizerStatus">现金 5%、固收 55%、A股宽基 40%，只优化内部权重</span></div><div class="table-wrap"><table id="allocationTable"></table></div></section>
         <section class="panel"><div class="panel-title"><h3>数据质量</h3><span>可追溯到每个代码</span></div><div id="qualityList" class="quality-list"></div></section>
       </section>
       <section id="warnings" class="warnings"></section>
